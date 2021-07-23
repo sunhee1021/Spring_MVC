@@ -1,0 +1,356 @@
+기존 : JSP 기반의 사이트 (DAO  , VO)
+
+고전적인 Spring 기반의 서비스
+
+
+
+Spring 사용 LIB :
+MAIN
+
+dist\안에 Jar import ....
+
+1. web.xml => Front Contoller : DispatcherServlet 구현
+           => URL 패턴 : *.htm
+
+2. 필요한 객체를 Load => 패턴을 가지고 있는 녀석들
+     사용자가 notice.htm
+   xml 하나 추가 ->     <servlet-name>dispatcher</servlet-name>
+   dispatcher-servlet.xml 생성
+   
+-------------------------------------------------------------------------------
+Spring 도 기존의 MVC 사용 
+Model 유지
+View 유지
+Controller =>  DispatcherServlet => 사용하는 서비스 class 제작
+
+3. Controller 역활을 하는 클래스 제작 
+   => NoticeController 클래스 
+   단 이 클래스는 implements Controller 구현 하여야 한다
+   =>handleRequest 메서드가 모든 처리 담당
+   =>글쓰기 -> 클래스
+   =>글상세 -> 클래스 
+   =>필요한 DAO 클래스도 참조 관계로 가지고 있다
+
+4.  NoticeController 인젝션 처리 통해 DispatcherServlet 사용할 수 있게
+    NoticeController 를 빈으로 등록  (페턴 구현)
+    사용하는 추가 class 에 대해서 setter 처리 할 수 있도록 ref=설정
+    
+    주의사항
+    <property name="noticeDao" ref="noticeDao"></property>   
+     =>name="noticeDao" => private NoticeDao noticeDao;
+     =>setter 동작 
+
+5. view 단처리 (JSTL and EL)
+   jar 추가
+   
+6. 기본적인 조회 처리 완료
+------------------------------------------------------------
+현재 추가적인 구현 : 상세보기  구현
+그런데 현재 사용하는 Spring 방식에서는 하나의 기능이(method) 구현 하기 위해서
+별도로 하나의 클래스 생성(controller) 상세를 처리하는 ....
+-> 그래서 annotation 사용하면 지금의 문제를 해결 가능 (하나의 클래스가 여러개의 기능)    
+   
+==================================================================   
+[SpringMVC_Basic03_WebSite_Annotation] 변경사항
+
+>Annotation 기반 변경
+>게시판 목록
+>게시판 상세보기 
+
+@Controller
+@RequestMapping
+
+1. 하나의 컨트롤러가 여러개의 요청을 함수 단위로 처리
+1.1 CustomerController >> 게시판 목록보기 , 게시판 상세보기  ... 함수단위로 매핑해서
+ 
+함수의 단위 매핑(URL)
+
+@Controller
+class Board{
+	
+	@RequestMapping("/list.do")
+	listBoard(){
+	
+	}
+	
+	@RequestMapping("/insert.do")
+	insertBoard(Board board){
+	
+	}
+}
+
+[실습 구성]
+-com.controller 삭제
+-ncontroller 추가  > CustomerController 추가
+
+
+[옵션]
+spring MVC의 Controller 클래스 선언을 단순화시켜준다. 
+스프링 컨트롤러, 서블릿을 상속할 필요가 없으며, @Controller로 등록된 클래스 파일에 대한 bean을 자동으로 생성해준다.
+ Controller로 사용하고자 하는 클래스에  @Controller 지정해 주면 component-scan으로 자동 등록된다.
+ <context:component-scan base-package="com.controller"/> 
+ @Controller 가 붙어있는 클래스를 자동 bean 등록   
+   
+   
+=======================================================================
+ [ SpringMVC_Basic06_WebSite_Annotation_JdbcTemplate ]
+ 
+ 1. JdbcTemplate 기반 코드 변환
+ 2. 별도의 lib(jar)
+    -spring-jdbc-4.2.5 jar
+    -spring-tx-4.2.5 jar 추가
+ 3. JdbcTemplate interface 기반 (DAO 관련해서)
+    -인터페이스
+    --MemberDao >>  구현하는 NewMemberDao   
+    --NoticeDao >>  구현하는 NewNoticeDao
+    
+    --NewNoticeDao 는 JdbcTempate 객체에 의존한다 (Injection)
+    
+ 4. root 컨테이너 구성하는 xml >> applicationContext.xml
+    (공통빈 만들고 주입(injection)
+    >>listener 를 통해서 컨테이너 생성 
+    
+    child 컨테이너 >> dispacher-servlet.xml
+    
+ 5. DI 구성 (web.xml) 변경
+    applicationContext.xml  >> listener 생성
+    dispacher-servlet.xml >> DispatcherServlet 생성
+    
+ 
+ 6. 다중 파일 업로드
+ 6.1 테이블
+     alter table notices
+     add FileSrc2 varchar2(500);
+     
+ 6.2 DTO (VO) 변경 (추가)
+     private String fileSrc2; (getter, setter) 추가
+     
+ 6.3 단일 파일 업로드 >> 다중 파일
+     private CommonsMultipartFile file;   대신에
+         아래 코드 추가
+     private List<CommonsMultipartFile> files; (setter , getter) 추가  
+
+ 6.4 View 단 Page (UI) >> noticeReg.jsp >> noticeEdit.jsp
+     파일1<input type="file" name=files[0]     
+     파일2<input type="file" name=files[1]  
+         
+ 6.5  CustomerController 
+      -데이터 삽입 , 수정 
+      -insert 처리함수
+      -update 처리함수 
+      List<CommonsMultipartFile> files 처리 로직 수정
+      
+ 6.6  상세보기 (noticeDetail.jsp)
+      기본 : 파일 1 개
+      >> 파일 2개
+      
+ 6.7  DAO >> fileSrc2 관련 select 문 추가 , insert 문 추가 , update 문 추가
+--->> 다중 파일 업로드 -----
+ 
+--------------------------------------------------------------
+7. 회원 controller 작성
+   JoinController.java 생성
+     -회원가입화면
+     -회원가입처리
+8. 회원 DAO(NewMemberDao)
+   함수 2개 (회원가입, 회원정보 조회)
+   -MemberDao 인터페이스 생성
+   -NewMemberDao 구현 
+   -JdbcTemplate injection 처리(Autowired)
+   -NewMemberDao 빈객체 등록 (xml 에서 처리)
+ 
+9. DB 컬럼명 1개 수정 : UID 예약에 ... userid 수정
+   -alter table member rename column "UID" to userid;               
+   >> MemberDto 수정
+   >> DAO uid 관련 내용 >> userid 수정
+
+10 회원가입 (index.jsp) >> 링크 >> joinus/join.htm 요청 ....   
+   
+    oracle 한글 한자 3Byte 대한 처리
+	alter table member
+	modify gender varchar2(20);
+   
+   
+11 회원가입 한글 : web.xml  
+  <filter>
+  	<filter-name>EncodingFilter</filter-name>
+  	<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+  	<init-param>
+  		<param-name>encoding</param-name>
+  		<param-value>UTF-8</param-value>
+  	</init-param>
+  </filter> 
+  <filter-mapping>
+  		<filter-name>EncodingFilter</filter-name>
+  		<url-pattern>/*</url-pattern>
+  </filter-mapping>  
+   
+ --메인화면  
+ --회원가입  (로그인 (x)) 인증과 권한 
+ --게시판 글쓰기 , 목록 , 수정 , 삭제 >> JdbcTemplate
+ 
+ JdbcTemplate에서 많이 사용되는 함수
+ 
+ 1. queryForObject : 
+   - [레코드 하나]의 값만을 들고 올때 사용 
+   - 주의점 : 0~2개 이상이면
+   --IncorrectResultSizeDataAccessException을 발생시킴. 
+   --select sum(sal) from emp
+ 
+2. query : [레코드 여러개]의 값[객체목록]을 가져올때 사용
+   --리턴타입  List<T>
+ 
+3. queryForList :
+   --쿼리 실행 결과로 읽어온 컬럼개수가 한개인 경우
+   --select name from emp
+ 
+3. JdbcTemplete 객체 사용시 
+   -컬럼명과 VO의 변수명이 같아야한다.
+ 
+4. ParameterizedBeanPropertyRowMapper와 RowMapper 차이점
+   - ParameterizedBeanPropertyRowMapper 컬럼명이 같은 경우
+   - RowMapper 컬럼명이 다른경우에 set 사용
+   - BeanPropertyRowMapper경우는 list와 같은 여러개의 레코드를 받을 때 사용
+
+
+
+
+------------------------------------------------------------
+	private JdbcTemplate jdbctemplate;
+	@Autowired
+	public void setJdbctemplate(JdbcTemplate jdbctemplate) {
+		this.jdbctemplate = jdbctemplate;
+	}
+	
+	@Override
+	public Member getMember(String userid) throws ClassNotFoundException, SQLException {
+		
+		List<Member> results = 
+				jdbctemplate.query("select * from member where userid=? ", 
+				new RowMapper<Member>() {
+					
+					@Override
+					public Member mapRow(ResultSet rs, int rownum) throws SQLException {
+						Member member = new Member(rs.getString("userid"), 
+												   rs.getString("pwd"), 
+												   rs.getString("name"), 
+												   rs.getString("gender"),
+												   rs.getString("birth"),
+												   rs.getString("is_Lunar"), 
+												   rs.getString("cPhone"), 
+												   rs.getString("email"), 
+												   rs.getString("habit"), 
+												   rs.getDate("regDate"));
+						return member;
+					}
+				} );
+		
+		return results.isEmpty() ? null : results.get(0);
+	}
+	
+	
+	@Override
+	public int insert(final Member member) throws ClassNotFoundException, SQLException {
+		
+		
+		return this.jdbctemplate.update(new PreparedStatementCreator() {
+			
+			@Override
+			public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+				String sql="insert into member(userid,pwd,name,gender,birth,is_lunar,cphone,email,habit,regdate) values(?,?,?,?,?,?,?,?,?,sysdate)";
+				PreparedStatement pstmt = con.prepareStatement(sql);
+				
+				pstmt.setString(1, member.getUserid());
+				pstmt.setString(2, member.getPwd());
+				pstmt.setString(3, member.getName());
+				pstmt.setString(4, member.getGender());
+				pstmt.setString(5, member.getBirth());
+				pstmt.setString(6, member.getIsLunar());
+				pstmt.setString(7, member.getcPhone());
+				pstmt.setString(8, member.getEmail());
+				pstmt.setString(9, member.getHabit());
+				
+				return pstmt;
+			}
+		});
+	}
+=========================================
+
+	1.공통영역 구성하기
+-include 사용....(헤더 , 하단 , 메뉴)
+->공통 페이지 (header.jsp, bottom.jsp , menu.jsp)
+->content.jsp > 3개 jsp 가지고 와서
+->board.jsp > 3개 jsp 가지고 와서 
+
+           
+4.현재 프로젝트 공통영역이 구성되어 있지 않아요
+  -공통영역분리
+  -실제 공통영역 이미 분리하고 시작
+
+5.<jsp:include=""> 
+
+
+6.Client 직접 JSP 파일에 접근 
+  -WEB-INF > 안으로 이동 >views> 구조
+  -WEB-INF >(X) css , image , htm,html ,js .... 기존구조
+
+------------------------------------------------
+1. WEB-INF > views 폴더생성
+
+2. WebContent (root context) > 기본 폴더 구조 
+   > css, html , htm
+3. WEB-INF > views > 안에 WebContent 동일한 구조 폴더 생성 (.jsp)
+
+4. 공통영역 구성
+   WEB-INF > views > inc(최상위공통) : header , footer , layout
+             views > customer > inc (폴더의 공통구조) : aside(navi) , visual, layout
+             views > joinus   > inc (폴더의 공통구조) : aside(navi) , visual, layout
+5. views > inc (header , footer ) 공통 레이아웃 설정
+
+5.1 ETC : index.jsp(views 폴더 안으로) 
+          index.jsp 내용 삭제
+
+  
+5.2 기존 jsp 파일에서 Main 부분만 남기고 공통영역 삭제하기
+    -WEB-INF/views/Customer 폴더안에 jsp정리
+    -WEB-INF/views/joinus 폴더안에 jsp정리
+	
+	
+
+	
+
+
+
+
+
+
+
+
+
+
+
+   
+   
+   
+
+  
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+  
+   
+   
+   
+   
+   
+   
+   
+   
+     

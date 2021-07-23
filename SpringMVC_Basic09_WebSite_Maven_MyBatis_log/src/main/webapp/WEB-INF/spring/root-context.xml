@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context 
+                           http://www.springframework.org/schema/context/spring-context.xsd">
+<!--  
+  Root 공통빈
+  DB관련 작업 (드라이버 로딩 , 템플릿 객체)
+  view 작업 (공통 UI) (internalResourceViewResolver)
+  
+  import org.springframework.jdbc.datasource.DriverManagerDataSource;
+  import org.springframework.jdbc.core.JdbcTemplate;
+  
+-->
+<!-- 공통 DB작업  -->
+ 
+<bean id="driverManagerDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+ 	<!-- <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver" /> 
+ 	     https://www.hanumoka.net/2018/07/27/spring-20180727-Spring-add-log4jdbc-log4j2-in-mysql-mybatis/
+ 	-->
+ 	<property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy" />
+ 	<property name="url" value="jdbc:log4jdbc:oracle:thin:@localhost:1521:XE" />
+ 	<!-- <property name="url" value="jdbc:log4jdbc:mysql://127.0.0.1:3306/mokaboard_dev?useSSL=false"></property> -->
+ 	<property name="username" value="springuser" />
+ 	<property name="password" value="1004" />
+ </bean> 
+
+ <!-- <bean id="driverManagerDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+ 	<property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy" />
+ 	<property name="url" value="jdbc:log4jdbc:oracle:thin:@localhost:1521:XE" />
+ 	<property name="username" value="springuser" />
+ 	<property name="password" value="1004" />
+ </bean> 
+  -->
+ <bean id="" class="org.springframework.jdbc.core.JdbcTemplate">
+ 	<property name="dataSource"  ref="driverManagerDataSource"></property>
+ </bean>
+ 
+
+<!-- Mybatis 설정
+기본 자바코드 : SqlMapConfig.xml 에서 설정했던 작업 (DB연결 ,mapper 설정)
+파일 없어지고 설명파일안에서   > SqlSessionFactoryBean
+기존 java 코드 : builder 사용 > Factory 객체 > sqlsession 생성 > 함수사용 
+
+두개의 클래스가 위 작업 처리 
+SqlSessionFactoryBean
+SqlSessionTemplate
+ -->
+<bean id="sqlSessionFactoryBean"  class="org.mybatis.spring.SqlSessionFactoryBean">
+    <property name="dataSource" ref="driverManagerDataSource"></property>
+    <property name="mapperLocations" value="classpath*:mapper/*xml" />
+</bean> 
+
+<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+  <constructor-arg index="0" ref="sqlSessionFactoryBean"/>
+</bean>
+<!-- Mybatis 설정  -->
+
+
+
+<!--  공통 파일 업로드 지원 -->
+<bean id="multipartResolver"    class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+	<property name="maxUploadSize"   value="10485760" />
+	<property name="defaultEncoding" value="UTF-8"/>
+	 		  
+	 		<!--  10M 
+	 		<property name="uploadTempDir" value="uploadTempDir"/>
+	 		<bean id="uploadTempDir" class="org.springframework.core.io.FileSystemResource">
+                <constructor-arg value="c:/temp/"/>
+            </bean>
+	 		-->
+</bean>
+
+<bean  id="internalResourceViewResolver"  class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	 	<property name="prefix">
+	 		<value>/WEB-INF/views/</value>
+	 	</property>
+	 	<property name="suffix">
+	 		<value>.jsp</value>
+	 	</property>
+  </bean>
+</beans>
+
+
+
+
+
+
+
+
+
+
+

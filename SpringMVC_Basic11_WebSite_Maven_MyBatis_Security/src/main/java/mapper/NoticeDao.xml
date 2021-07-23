@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--  
+[key point]
+Mybatis 사용 프로젝트 진행시
+
+1. mapper namespace 이름 : DAO 가지는 interface 이름을 그대로
+2. <select id="" 이름을  interface 가지는 함수명과 동일
+result : interface 와 mapper 있으면 실행
+
+   //게시물 개수
+	public int getCount(String field, String query) throws ClassNotFoundException, SQLException;
+	
+	//전체 게시물
+	public List<Notice> getNotices(int page, String field, String query) throws ClassNotFoundException, SQLException;
+
+	
+	//게시물 삭제
+	public int delete(String seq) throws ClassNotFoundException, SQLException;
+	
+	
+	//게시물 수정
+	public int update(Notice notice) throws ClassNotFoundException, SQLException;
+	
+	
+	//게시물 상세
+	public Notice getNotice(String seq) throws ClassNotFoundException, SQLException;
+	
+
+	//게시물 입력
+	public int insert(Notice n) throws ClassNotFoundException, SQLException ;
+-->
+
+<mapper namespace="dao.NoticeDao">
+		
+		<!--
+		public int getCount(String field, String query)  
+		1.  parameter 1개 : 생략 or  parameterType="int" 명시
+		2. parameter DTO 객체 :  parameterType="vo.Notice"
+		3. parameter 2개 이상 (DTO가 없는 경우)
+		3.1  hashMap >>   map.put(key , value) , map.put(key1 , value1)  >> parameterType="Map"
+		3.2 mybatis parameter 값을 read 방법 : param1  , param2 , param3 ......
+		
+	
+		ex)	public int getCount(String field, String query)   >> mapper >> param1 , param2
+		        parameter 1개 >  param1 이 불가능(x)
+		-->
+		<select id="getCount"  resultType="int">
+				SELECT COUNT(*) CNT 
+				FROM NOTICES 
+				WHERE ${param1} LIKE '%${param2}%'
+		</select>
+		
+		<!--  
+		public List<Notice> getNotices(int page, String field, String query)  
+		param1 > page    param2 > field     param3 > query
+		
+		>>논리가 수식이 필요한 것은  DB에게 ....
+		
+		int srow = 1 + (page-1)*5;
+		int erow = 5 + (page-1)*5; 
+		
+		 ?  >> "%"+query+"%"    >>>   LIKE '%${param3}%' 
+		 ?  >> srow
+		 ?  >> erow
+		-->
+		<select id="getNotices"  resultType="vo.Notice">
+				SELECT * FROM
+			                            (
+			                                SELECT ROWNUM NUM, N.* 
+			                                FROM 
+			                                          (  SELECT * 
+			                                              FROM NOTICES 
+			                                              WHERE ${param2} LIKE '%${param3}%' ORDER BY REGDATE DESC
+			                                           ) N
+			                               )  WHERE NUM BETWEEN 1 + (${param1}-1)*5 AND 5 + (${param1}-1)*5
+		</select>
+		
+		<!--   public Notice getNotice(String seq)  
+				  param1 적용 안되요 (x)
+				 
+		-->
+		<select id="getNotice"   resultType="vo.Notice">
+				SELECT seq,title,writer,content,regdate,hit,filesrc,filesrc2 
+				FROM NOTICES 
+				WHERE SEQ=#{seq}
+		</select>
+		
+		<!--  
+		public int delete(String seq)
+		-->
+		<delete id="delete" >
+				DELETE NOTICES WHERE SEQ=#{seq}
+		</delete>
+		
+	  <!-- 	
+	  public int update(Notice notice)
+	  파일 수정 :  null  , null
+	  1개 수정  : 1.jpg  , null
+	  2개 수정 :  1.jpg , 2.jpg
+	  값이 넘어오지 않는 경우  null 처리 방법
+	  
+	  #{fileSrc ,jdbcType=VARCHAR}  >> FILESRC = null 
+	  -->
+	  <update id="update"  parameterType="vo.Notice">
+	  		UPDATE NOTICES 
+	  		SET TITLE=#{title}, 
+	  		        CONTENT=#{content}, 
+	  		        FILESRC=#{fileSrc , jdbcType=VARCHAR} , 
+	  		        FILESRC2=#{fileSrc2 , jdbcType=VARCHAR}   
+	  		WHERE SEQ=#{seq}
+	  </update>
+	  
+	  <!--  
+	  public int insert(Notice n)
+	  
+	  <insert id="insert" parameterType="vo.Notice">
+	  			INSERT INTO NOTICES(SEQ, TITLE, CONTENT, WRITER, REGDATE, HIT, FILESRC , FILESRC2) 
+	  			VALUES( (SELECT MAX(TO_NUMBER(SEQ))+1 FROM NOTICES), #{title}, #{content}, 'bituser', SYSDATE, 0, #{fileSrc},#{fileSrc2})
+	  </insert>
+	  -->
+	  <insert id="insert" parameterType="vo.Notice" >
+	  		<selectKey  order="BEFORE"   keyProperty="seq"   resultType="String">
+	  				SELECT MAX(TO_NUMBER(SEQ))+1 FROM NOTICES
+	  		</selectKey>
+	  			INSERT INTO NOTICES(SEQ, TITLE, CONTENT, WRITER, REGDATE, HIT, FILESRC , FILESRC2) 
+	  			VALUES( #{seq}, #{title}, #{content},#{writer}, SYSDATE, 0, #{fileSrc},#{fileSrc2})
+	  </insert>
+</mapper>
+
+
+
+
+

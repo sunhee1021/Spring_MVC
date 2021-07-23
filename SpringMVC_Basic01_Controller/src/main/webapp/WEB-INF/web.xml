@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd" id="WebApp_ID" version="4.0">
+  <display-name>SpringMVC_Basic01_Controller</display-name>
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+  </welcome-file-list>
+
+
+  <!-- spring은 frontcontroller를 만들어서 제공해줌
+       우리가 과제할때처럼 frontcontroller를 만들어줄 필요가 없다 -->
+  <servlet>
+  	<servlet-name>spring</servlet-name>
+  	<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+  											<!-- DispatcherServlet도 여러개 만들수 있음
+  											플젝할때 frontcontroller 여러개 만들수 있었지?(member,board) -->
+  </servlet>
+  <servlet-mapping>
+  	<servlet-name>spring</servlet-name>
+  	<url-pattern>*.do</url-pattern>
+  </servlet-mapping>
+</web-app>
+

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context 
+                           http://www.springframework.org/schema/context/spring-context.xsd">
+<!--  
+이 xml 파일은
+root(공통빈) 컨테이너에 들어갈 빈객체 생성과 injection(의존설정) 을 하는데 쓸꺼에요
+
+-DB관련 (드라이버로딩, 템플릿 객체)
+-view 작업(공통 UI설정) (internalResourceViewResolver)
+  
+  import org.springframework.jdbc.datasource.DriverManagerDataSource;
+  import org.springframework.jdbc.core.JdbcTemplate;
+  
+
+-->
+
+<!-- 공통 DB작업  -->
+  <bean id="driverManagerDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+ 	<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver" />
+ 	<property name="url" value="jdbc:oracle:thin:@localhost:1521:XE" />
+ 	<property name="username" value="springuser" />
+ 	<property name="password" value="1004" />
+ </bean>
+ <bean id="" class="org.springframework.jdbc.core.JdbcTemplate">
+ 	<property name="dataSource"  ref="driverManagerDataSource"></property>
+ </bean>
+ 
+ <!-- 공통 UI  
+ <bean id="internalResourceViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+ 		<property name="prefix">
+ 			<value>/WEB-INF/view/</value>
+ 		</property>
+ 		<property name="suffix">
+ 			<value>.jsp</value>
+ 		</property>
+ </bean>	-->
+ 
+ <!-- 공통 파일업로드 -->
+ <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+ 	<property name="maxUploadSize" value="10485760"></property>
+ 	<property name="defaultEncoding" value="UTF-8"></property>
+ </bean>
+</beans> 
+
+

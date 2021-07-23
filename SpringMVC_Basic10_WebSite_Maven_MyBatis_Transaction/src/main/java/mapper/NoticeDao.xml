@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--  
+[key point]
+Mybatis 사용 프로젝트 진행시
+
+1. mapper namespace 이름 : DAO 가지는 interface 이름을 그대로
+2. <select id="" 이름을  interface 가지는 함수명과 동일
+result : interface 와 mapper 있으면 실행
+
+   //게시물 개수
+	public int getCount(String field, String query) throws ClassNotFoundException, SQLException;
+	
+	//전체 게시물
+	public List<Notice> getNotices(int page, String field, String query) throws ClassNotFoundException, SQLException;
+
+	
+	//게시물 삭제
+	public int delete(String seq) throws ClassNotFoundException, SQLException;
+	
+	
+	//게시물 수정
+	public int update(Notice notice) throws ClassNotFoundException, SQLException;
+	
+	
+	//게시물 상세
+	public Notice getNotice(String seq) throws ClassNotFoundException, SQLException;
+	
+
+	//게시물 입력
+	public int insert(Notice n) throws ClassNotFoundException, SQLException ;
+	====================================================================================================
+-->
+
+<mapper namespace="dao.NoticeDao">
+		
+	<!-- public int getCount(String field, String query) 이거를 구현해야해_어떻게? hashmap!!!
+	1.parameter가 1개일 경우 : 보통은 생략하거나 parameterType이라는 속성을 사용해서 parameterType="int" 이렇게 명시
+	2.parameter가 DTO 객체일 경우 : parameterType="vo.Notice" 이렇게 명시
+	3.parameter가 1개보다 많은데, DTO가 없는 경우 : H.A.S.H.M.A.P!!!!!!!!!!!!!!
+	3-1.hashMap >> map.put(key, value),map.put(key1, value1) >> parameterType="Map"
+	3-2.mybatis parameter 값을 read 하는 방법 : param1, param2, param3 ... 순서대로 읽음 
+											그치만 1개인 경우는 못읽어요..........
+	
+	ex) public int getCount(String field, String query)
+		>> mapper >> param1, param2 
+		>> parameter 1개짜리는 param1,param2 로 못받아요
+		>> 왜인지 몰라요, 그냥 기억하세요
+		
+	 -->
+		<select id="getCount"  resultType="int">
+				SELECT COUNT(*) CNT 
+				FROM NOTICES 
+				WHERE ${param1} LIKE '%${param2}%'
+		<!-- #{param1} 하면 안되지, ''"" 이렇게 붙어서 나오니까 ${param1} 이렇게 해줘야해 (#,$ 구분 잘하자)
+			${param1} LIKE '%${param2}%' -->
+		</select>
+		
+		<!--  
+		public List<Notice> getNotices(int page, String field, String query)  
+		param1 > page    param2 > field     param3 > query
+		
+		>>논리가 수식이 필요한 것은  DB(Oracle)에게 넘겨
+		
+		int srow = 1 + (page-1)*5;
+		int erow = 5 + (page-1)*5; 
+		
+		 ?  >> "%"+query+"%"    >>>   LIKE '%${param3}%' 
+		 ?  >> srow
+		 ?  >> erow
+		-->
+		<select id="getNotices"  resultType="vo.Notice">
+		<!-- List<Notice>가 return 값이라고 해서 resultType을 list로 해줄필요가 없음
+			 						vo.Notice 해주면 자동으로 list로 보여줌 -->
+			<!-- parameterType은 생략하거나, dto거나 해줘야하고
+					but  resultType 은 써줘야해 
+					
+					parameterType은 한개일때만 쓰거나 생략을해버리거나 DTO타입이거나
+					resultType은 무조건써준다-->
+				SELECT * FROM
+                (
+                    SELECT ROWNUM NUM, N.* 
+                    FROM 
+                              (  SELECT * 
+                                  FROM NOTICES 
+                                  WHERE ${param2} LIKE '%${param3}%' ORDER BY REGDATE DESC
+                               ) N
+                   )  WHERE NUM BETWEEN 1 + (${param1}-1)*5 AND 5 + (${param1}-1)*5
+					<!-- 제발 세미콜론 넣지마세요(;)!!!!!!!!!!!!!!!!!!!!!! -->
+		</select>
+		
+		<!--   public Notice getNotice(String seq)  
+			   param1 > seq ? parameter 1개라서 param 못써요
+	     생략하거나 parameterType="int" 이런식으로 명시-->
+				 
+		<select id="getNotice"  resultType="vo.Notice">
+				SELECT seq,title,writer,content,regdate,hit,filesrc,filesrc2 
+				FROM NOTICES 
+				WHERE SEQ=#{seq}
+		</select>
+		
+		<!--  
+		public int delete(String seq)
+		-->
+		<delete id="delete" >
+		<!-- delete는 결과 row가 없으니까 resultType해줄 필요없죠 -->
+				DELETE NOTICES WHERE SEQ=#{seq}
+		</delete>
+		
+	  <!-- 	
+	  public int update(Notice notice)
+	  파일 수정 :  null  , null
+	  1개 수정  : 1.jpg  , null
+	  2개 수정 :  1.jpg , 2.jpg
+	  값이 넘어오지 않는 경우  null 처리 방법
+	  
+	  #{fileSrc ,jdbcType=VARCHAR}  >> FILESRC = null 
+	  -->
+	  <update id="update"  parameterType="vo.Notice">
+	  		UPDATE NOTICES 
+	  		SET TITLE=#{title}, 
+	  		        CONTENT=#{content}, 
+	  		        FILESRC=#{fileSrc , jdbcType=VARCHAR} , 
+	  		        <!-- 값이 넘어오지 않는것에 대한 기본값 처리도 가능 -->
+	  		        FILESRC2=#{fileSrc2 , jdbcType=VARCHAR}   
+	  		WHERE SEQ=#{seq}
+	  </update>
+	  
+	  <!--  
+	  public int insert(Notice n)
+	  
+	  <insert id="insert" parameterType="vo.Notice">
+	  			INSERT INTO NOTICES(SEQ, TITLE, CONTENT, WRITER, REGDATE, HIT, FILESRC , FILESRC2) 
+	  			VALUES( (SELECT MAX(TO_NUMBER(SEQ))+1 FROM NOTICES), #{title}, #{content}, 'bituser', SYSDATE, 0, #{fileSrc},#{fileSrc2})
+	  </insert>
+	  -->
+	  <insert id="insert" parameterType="vo.Notice" >
+	  		<selectKey  order="BEFORE"   keyProperty="seq"   resultType="String">
+	  				SELECT MAX(TO_NUMBER(SEQ))+1 FROM NOTICES
+	  		</selectKey>
+	  			INSERT INTO NOTICES(SEQ, TITLE, CONTENT, WRITER, REGDATE, HIT, FILESRC , FILESRC2) 
+	  			VALUES( #{seq}, #{title}, #{content}, 'bituser', SYSDATE, 0, #{fileSrc},#{fileSrc2})
+	  </insert>
+	  
+	  <!-- public int updateOfMemberPoint(String userid) -->
+		<update id="updateOfMemberPoint">
+			 UPDATE MEMBER
+			 SET point = nvl(point,0) + 1
+			 WHERE userid = #{userid}
+		</update>
+</mapper>
+
+
+
+
+

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context 
+                           http://www.springframework.org/schema/context/spring-context.xsd">
+            
+
+<!-- 
+	context:annotation-config 태그는 어노테이션과 관련해서 
+	
+	다음의 BeanPostProcessor를 함께 등록 한다.
+	
+	- @Required(RequiedAnnotationBeanPostProcessor)
+	- @Autowired(AutowiredAnnotationBeanPostProcessor)
+	- @Resource, @PostConstruct, @PreDestory(CommonAnnotationBeanPostProcessor)
+	- @Configuration(ConfigurationClassPostProcessor)
+
+
+
+	자동 빈객체 생성 : <context:component-scan>
+	
+	<context:component-scan base-package="com.controller">
+	
+	공통빈
+	
+	@Controller
+	Presentation Layer에서 Contoller를 명시하기 위해서 사용
+	
+	@Service
+	Business Layer에서 Service를 명시하기 위해서 사용
+	
+	@Repository 
+	Persistence Layer에서 DAO를 명시하기 위해서 사용
+	
+	@Component
+	그 외에 자동으로 스캔해서 등록하고 싶은 것들을 위해 사용
+
+-->
+
+<!-- @Autowired 자동 처리를 빈객체 자동 생성 등록 -->
+<context:annotation-config />
+
+<!-- 공통빈 -->
+<bean id="internalResourceViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix">
+			<value>/WEB-INF/views/</value>
+		</property>
+		<property name="suffix">
+			<value>.jsp</value>
+		</property>
+	</bean>
+	
+
+<!-- TEST_1 과 관련된 BEAN -->
+<bean id="helloController" class="com.controller.HelloController"></bean>
+<!-- 이제 여기서는 id가 의미가 없대, 왠지 공부하세요-->
+<!-- id로 bean에 접근할 필요가 없으니까 annotation 을 쓰게 돼서? -->
+
+
+<!-- TEST_2 와 관련된 BEAN -->
+<!-- 하나의 요청주소에 따라서 (전송방식에 따라서) : GET,POST
+     화면을 보여줄것인지, 처리를 할것인지 판단할 수 있다.
+     전제조건 : 요청 주소는 같다                       -->
+<bean id="newArticleController" class="com.controller.NewArticleController"></bean>
+<!-- class를 injection 할때만 id가 필요한거니까 지금은 필요없지, ref할것도 아니니까 -->
+
+<!-- service에 대해서 bean을 만들어야지 ArticleService 파일한번 봐봐, 다음부터는 bean을 안만들어도 된대 -->
+<bean id="articleService" class="com.service.ArticleService"></bean>
+
+<!-- TEST_3 과 관련된 BEAN -->
+<bean class="com.controller.OrderController"></bean>
+
+<!-- TEST_4 @RequestParam -->
+<bean class="com.controller.SearchController"></bean>
+
+<!-- TEST_5 @RequestParam -->
+<bean class="com.controller.CookieController"></bean>
+
+<!-- TEST_6 파일업로드 -->
+<!-- 
+import org.springframework.web.multipart.commons.CommonsMultipartResolver
+import org.springframework.web.multipart.commons.CommonsMultipartFile
+ 
+ CommonsMultipartFile 사용해서 업로드를 할려면 몇가지 기본 세팅
+ 
+ CommonsMultipartResolver : 업로드한 파일에 대한 정보 관리 (크기, 이름, 중복이름 정책)
+ 
+ 파일 처리(의존객체)_Utils에 찾아봐
+ com.springsource.org.apache.commons.fileupload-1.2.0.jar
+ com.springsource.org.apache.commons.io-1.4.0.jar
+ -->
+ 
+ <bean class="com.controller.ImageController"/> 
+ 
+ <!-- 파일 업로드 보조(반드시 필요함) -->
+ <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+ 	<property name="maxUploadSize" value="10485760"></property>
+ 	<property name="defaultEncoding" value="UTF-8"></property>
+ </bean>
+
+</beans> 
+
