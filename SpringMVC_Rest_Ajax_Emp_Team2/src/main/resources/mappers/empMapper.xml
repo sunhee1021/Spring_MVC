@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mappers.empMapper">
+	<insert id="insertEmp">
+		INSERT INTO EMPAJAX(EMPNO, ENAME, SAL)
+		VALUES(#{empno}, #{ename}, #{sal})
+	</insert>
+	
+	<select id="getEmpByEmpNo" resultType="kr.or.bit.dto.EmpDto">
+		SELECT * FROM EMPAJAX WHERE EMPNO = #{empno}
+	</select>
+	
+	<select id="getEmpList" resultType="kr.or.bit.dto.EmpDto">
+		SELECT EMPNO, ENAME, SAL FROM EMPAJAX
+	</select>
+	
+	<update id="updateEmp">
+        UPDATE EMPAJAX
+          SET ENAME=#{ename},
+              SAL = #{sal}
+        WHERE EMPNO = #{empno}
+    </update>
+	
+	<delete id="deleteEmp">
+        DELETE FROM EMPAJAX WHERE EMPNO = #{empno}
+    </delete>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+

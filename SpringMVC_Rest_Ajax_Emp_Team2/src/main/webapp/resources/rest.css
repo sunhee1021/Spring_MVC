@@ -1,0 +1,17 @@
+table {
+	border-collapse: collapse; /* 붕괴하다 , 무너지다 */
+	width: 100%;
+}
+
+th {
+	text-align: center;
+	width: 10px;
+}
+
+td {
+	text-align: center;
+	width: 10px;
+}
+input[type="text"]{
+	width: 60%;
+}
