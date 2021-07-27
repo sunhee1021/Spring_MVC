@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:task="http://www.springframework.org/schema/task" 
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/task
+       http://www.springframework.org/schema/task/spring-task.xsd">
+
+	<!-- 어노테이션 사용지원 @Scheduled , @Async -->
+	<task:annotation-driven executor="executor" scheduler="scheduler" proxy-target-class="false"/>
+	
+	<!-- 빈 객체생성 -->
+	<bean id="updateService" class="schedulerService.updateService" />
+	<bean id="insertService" class="schedulerService.insertService" />
+
+	<!-- TaskExecutor 설정 -->
+	<task:executor id="executor" keep-alive="10" pool-size="2-5"
+		queue-capacity="5" rejection-policy="ABORT" />
+
+
+	<!-- TaskScheduler 설정 -->
+	<task:scheduler id="scheduler" pool-size="2" />
+
+	<task:scheduled-tasks scheduler="scheduler">
+		<task:scheduled ref="updateService" method="update" cron="30 34 14 * * *" /> <!-- insert 후 30초뒤에 update실행 -->
+	</task:scheduled-tasks>
+
+	
+</beans>
